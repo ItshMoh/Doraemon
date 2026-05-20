@@ -1,3 +1,5 @@
+from datetime import datetime, timezone
+
 from app.database.client import get_supabase_client
 
 
@@ -29,3 +31,47 @@ class TaskRepository:
             .execute()
         )
         return result.data[0]
+
+    def get_by_id(self, task_id: str) -> dict | None:
+        result = (
+            self.client.table("tasks")
+            .select("*")
+            .eq("id", task_id)
+            .limit(1)
+            .execute()
+        )
+        return result.data[0] if result.data else None
+
+    def list_by_status(self, status: str) -> list[dict]:
+        result = (
+            self.client.table("tasks")
+            .select("*")
+            .eq("status", status)
+            .order("todo_date", desc=False)
+            .order("created_at", desc=False)
+            .execute()
+        )
+        return result.data
+
+    def update_title(self, task_id: str, title: str) -> dict | None:
+        result = (
+            self.client.table("tasks")
+            .update({"title": title.strip()})
+            .eq("id", task_id)
+            .execute()
+        )
+        return result.data[0] if result.data else None
+
+    def mark_completed(self, task_id: str) -> dict | None:
+        result = (
+            self.client.table("tasks")
+            .update(
+                {
+                    "status": "completed",
+                    "completed_at": datetime.now(timezone.utc).isoformat(),
+                }
+            )
+            .eq("id", task_id)
+            .execute()
+        )
+        return result.data[0] if result.data else None
